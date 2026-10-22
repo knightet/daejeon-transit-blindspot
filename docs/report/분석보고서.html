@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>평균에 가려진 교통 사각지대 — 분석보고서</title>
+<meta name="author" content="이태희">
+<style>
+@font-face { font-family: "Noto Sans KR"; src: local("Noto Sans KR"), url("NotoSansKR.ttf"); font-weight: 100 900; }
+@page { size: A4; margin: 14mm 14mm 14mm 14mm; @bottom-center { content: counter(page); font-size: 9pt; color: #555; } }
+:root { --ink: #111; --mute: #555; --head: #1f3b5b; --accent: #2a5d9f; --line: #c9ced6; --th: #eef1f5; }
+* { box-sizing: border-box; }
+body { font-family: "Noto Sans KR", sans-serif; color: var(--ink); font-size: 9.4pt; line-height: 1.5; margin: 0; background: #fff; }
+.kicker { text-align: center; color: var(--mute); font-size: 9pt; }
+h1 { text-align: center; color: var(--head); font-size: 19pt; margin: 2px 0 10px; }
+h2 { color: var(--head); font-size: 13pt; margin: 16px 0 6px; padding-bottom: 3px; border-bottom: 1.5px solid var(--head); break-after: avoid; }
+h3 { color: var(--accent); font-size: 10.5pt; margin: 10px 0 4px; break-after: avoid; }
+p { margin: 4px 0; }
+ul { margin: 4px 0; padding-left: 18px; }
+li { margin: 2px 0; }
+table { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 8.8pt; break-inside: avoid; }
+th, td { border: 1px solid var(--line); padding: 3px 6px; vertical-align: top; text-align: left; }
+th { background: var(--th); font-weight: 700; }
+td.n, th.n { text-align: right; white-space: nowrap; }
+.cover th { width: 14%; }
+figure { margin: 8px 0; text-align: center; break-inside: avoid; }
+figure img { max-width: 100%; }
+figcaption { font-size: 8.8pt; color: var(--mute); margin-top: 2px; }
+.note { font-size: 8.6pt; color: var(--mute); }
+.box { border-left: 3px solid var(--accent); background: #f5f8fc; padding: 5px 9px; margin: 6px 0; }
+a { color: var(--accent); text-decoration: none; }
+b { font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="kicker">- AI와 함께하는 교통문제 해결을 위한 데이터 분석 공모전 -</div>
+<h1>분석보고서</h1>
+
+<table class="cover">
+<tr><th>항목</th><th>내용</th></tr>
+<tr><td>이름/팀명</td><td>이태희 (개인)</td></tr>
+<tr><td>주제</td><td>평균에 가려진 교통 사각지대: 대전 100m 격자·보행망 분석과 AI 입지 최적화로 찾은 노인 이동 격차와 유형별 처방</td></tr>
+</table>
+
+<h2>1. 분석 배경 및 목적</h2>
+<h3>문제 상황</h3>
+<ul>
+<li>수송 부문 온실가스의 약 97%가 도로에서 나옵니다. 자가용 의존을 줄이려면 대중교통이 닿지 않는 곳을 먼저 찾아야 합니다.</li>
+<li>지하철역 권역 밖에 사는 노인은 권역 안 노인보다 통행이 약 13배 적습니다(연세대 교통카드 연구, 주간경향 2026.4). 접근성이 떨어지면 노인은 이동 자체를 포기합니다.</li>
+<li><b>평균의 함정:</b> 교통 취약 여부는 주로 시·군·구나 읍면동 평균으로 판단됩니다. 평균이 양호한 광역시 안의 작은 사각지대는 통계에 드러나지 않습니다.</li>
+<li><b>수단 배분 기준 부재:</b> 대전의 첫 수요응답형 버스(꿈씨버스)는 컨벤션센터 관광지구에서 15인승 3대로 운행 중입니다. 어디에 정류장을 만들고, 어디에 DRT를, 어디에 택시 바우처를 쓸지 정하는 데이터 기준은 없습니다.</li>
+</ul>
+<h3>분석 목적과 참여 동기</h3>
+<p>대전에서 대학을 다니며 버스가 잘 오지 않는 동네의 노인들을 자주 봤습니다. 동 평균 통계로는 보이지 않는 사각지대를 100m 단위로 찾아내고, 각 사각지대에 맞는 교통수단과 정류장 위치를 데이터로 제안하는 것이 이 분석의 목적입니다.</p>
+
+<h2>2. 활용 데이터</h2>
+<table>
+<tr><th>활용 데이터(명)</th><th>제공기관</th><th>출처 플랫폼</th><th>URL</th><th>선정 이유</th></tr>
+<tr><td>연령별 인구현황(행정동, 2026.9)</td><td>행정안전부</td><td>주민등록 인구통계</td><td>jumin.mois.go.kr</td><td>동별 실제 노인 수</td></tr>
+<tr><td>전국 대중교통 버스정류장 현황(2024.12)</td><td>한국교통안전공단</td><td>공공데이터포털</td><td>data.go.kr/data/15066754</td><td>정류장 수 검증</td></tr>
+<tr><td>연령·성별 인구 100m 격자(2025, R2025A)</td><td>WorldPop(사우샘프턴대)</td><td>WorldPop Hub</td><td>hub.worldpop.org</td><td>동 안 인구 위치 배분</td></tr>
+<tr><td>버스정류장·노선·보행 도로망·생활시설</td><td>OpenStreetMap 기여자</td><td>Overpass API(2026.10.13 추출)</td><td>openstreetmap.org</td><td>정류장 위치, 실제 보행거리, 병원·시장 위치</td></tr>
+<tr><td>행정동 경계(2026.7)</td><td>vuski/admdongkor</td><td>GitHub</td><td>github.com/vuski/admdongkor</td><td>동 단위 집계</td></tr>
+</table>
+<p class="note">이용조건: OpenStreetMap은 ODbL, WorldPop은 CC BY 4.0, 공공데이터는 공공누리 조건을 따릅니다. 모든 데이터는 공개 API나 공식 다운로드로 받았습니다.</p>
+
+<h2>3. 분석과정 및 방법</h2>
+<ul>
+<li><b>① 100m 격자 노인 인구:</b> 대전을 100m 격자 51,494개로 나눴습니다. WorldPop 65세 이상 격자 인구를 행정동별 주민등록 65세 이상 인구(합계 288,572명)에 맞도록 비례 보정했습니다.</li>
+<li><b>② 실제 보행 거리:</b> OSM 보행 도로망(노드 약 5만 개)에서 다익스트라 알고리즘으로 각 격자에서 가장 가까운 정류장까지 걷는 거리를 계산했습니다.</li>
+<li><b>③ 버스 접근성 지수(SAI):</b> 런던 PTAL을 단순화해, 반경 600m 안 정류장마다 "경유 노선 수 × 거리 감쇠"를 더했습니다.</li>
+<li><b>④ 사각지대 정의:</b> 65세 이상 3명 이상 격자 중 정류장 보행거리 500m 초과 또는 SAI 하위 20%인 곳입니다. 격자당 3명 미만은 WorldPop 추정 오차가 커서 사각지대 집계에서 제외하고 따로 다룹니다(5.1).</li>
+<li><b>⑤ 평균 vs 격자 비교:</b> 행정동 평균 보행거리가 300m 이하("양호")인데 사각지대 노인이 100명 이상인 동을 "평균에 가려진 동"으로 정의했습니다.</li>
+<li><b>⑥ 군집·유형 분류(머신러닝):</b> DBSCAN(150m)으로 붙어 있는 사각지대 격자를 생활권으로 묶고, K-평균(k=3)으로 노인 수·밀도·보행거리에 따라 세 유형으로 나눴습니다.</li>
+<li><b>⑦ 정류장 신설 최적 입지(MCLP):</b> 버스가 다닐 수 있는 도로(간선~집산로) 위 교차점 1,261곳을 후보로, 보행 400m 안의 사각지대 노인을 최대로 덮는 위치를 탐욕 알고리즘으로 골랐습니다(최적해의 63% 이상 보장).</li>
+<li><b>⑧ 검증:</b> 분석에 쓴 대전 정류장은 정류소번호 기준 2,475개로, 공식 통계(2,389개)보다 많아 정류장 누락에 따른 가짜 사각지대 위험이 낮습니다. 격자 인구 합계는 주민등록과 일치합니다(반올림 차이 2명). 보행망이 끊겨 직선거리×1.3으로 보정한 격자는 사각지대의 2%(32격자, 153명)입니다.</li>
+</ul>
+<p>분석 도구: Python(geopandas, OSMnx, NetworkX, scikit-learn, rasterio, matplotlib). 분석 코드: <a href="https://github.com/knightet/daejeon-transit-blindspot">https://github.com/knightet/daejeon-transit-blindspot</a></p>
+
+<h2>4. AI 기술 활용</h2>
+<table>
+<tr><th style="width:20%">구분</th><th>내용</th></tr>
+<tr><td>사용 서비스</td><td>Claude(Anthropic) — 데이터 수집 경로 탐색, 분석 코드 작성, 보고서 초안 작성 보조</td></tr>
+<tr><td>활용 범위</td><td>공개 데이터 출처 조사, Overpass·WorldPop 수집 스크립트와 Python 분석 코드 작성, 결과 해석 초안 작성. 수치와 결론은 참가자가 공식 통계(주민등록 인구, 공식 정류장 수)와 대조해 직접 검증</td></tr>
+<tr><td>주요 프롬프트</td><td>"교통 데이터 공모전에서 수상 가능성이 높은 아이디어와 분석 방법을 찾아줘" / "대전 노인 교통 사각지대 분석에 필요한 공개 데이터를 모아줘" / "주민등록 연령별 인구로 격자 노인 인구를 보정해줘" / "정류장을 새로 만들 최적 위치를 찾는 분석을 추가해줘"</td></tr>
+<tr><td>분석 알고리즘(AI·최적화)</td><td>DBSCAN·K-평균 군집(scikit-learn), 최대커버링 입지(MCLP) 탐욕 최적화, 보행망 최단경로(다익스트라)</td></tr>
+<tr><td>데이터 보호</td><td>개인정보·비공개 데이터는 사용하지 않았고, 공개 집계 데이터만 AI에 입력</td></tr>
+</table>
+
+<h2>5. 분석 내용 및 결과</h2>
+<h3>5.1 전체 규모</h3>
+<p>대전 65세 이상 288,572명 중 <b>약 14,000명(13,962명)이 교통 사각지대</b>에 삽니다. 구별 사각지대 비율은 유성구가 7.3%로 가장 높습니다. 유성구는 노인 비율이 가장 낮은 구여서 신도시·외곽 개발지의 노선 공백이 원인으로 보입니다.</p>
+<p>사각지대는 사실상 "정류장이 먼 곳"입니다. 사각지대 노인의 99.9%(13,945명)가 정류장 보행 500m 초과 기준에 해당하고, 노선 수(SAI)만 낮아 포함된 노인은 17명뿐입니다. 따라서 정류장 신설·DRT처럼 <b>거리를 줄이는 처방</b>이 맞습니다.</p>
+<div class="box">정류장까지 500m 넘게 걸어야 하는 노인은 약 20,540명으로 사각지대(13,962명)보다 많습니다. 차이 중 <b>최소 6,578명</b>은 노인이 3명 미만인 격자에 흩어져 사는 외곽 노인으로, 추정 오차 때문에 사각지대 집계에서는 뺐습니다. 이들은 가장 흩어져 사는 취약층이므로 정책 대상에서는 6장의 교통바우처(C형) 대상에 포함할 것을 제안합니다.</div>
+<p>사각지대 노인에게 정류장만 먼 것이 아닙니다. <b>사각지대 노인의 20.9%는 병원·의원까지 1km 넘게</b> 떨어져 있고(중앙값 725m), 10.0%는 시장·마트까지 1km가 넘습니다(OSM 시설 기준). 버스 접근성이 곧 진료·장보기 접근성입니다.</p>
+<figure><img src="../../results/figures/fig1_pop_access.png" style="max-width:80%"><figcaption>그림 1. 65세 이상 인구 분포(왼쪽)와 가장 가까운 정류장까지의 보행거리(오른쪽)</figcaption></figure>
+
+<h3>5.2 핵심 발견: 평균에 가려진 사각지대</h3>
+<figure><img src="../../results/figures/fig3_hidden_dongs.png" style="max-width:60%"><figcaption>그림 2. 행정동 평균 보행거리와 사각지대 노인 수 (파란 영역 = 동 평균으로는 "양호")</figcaption></figure>
+<p>동 평균으로 "양호"한 67개 동 중 <b>35개 동에 사각지대 노인이 100명 이상</b> 삽니다. <b>전체 사각지대 노인의 56%(약 7,800명)</b>가 이런 동에 있습니다. 대표적으로 원신흥동, 온천1동, 중촌동, 복수동입니다. 평균만 보는 행정에서는 이 노인들이 보이지 않습니다.</p>
+
+<h3>5.3 사각지대 유형과 정류장 신설 최적 입지</h3>
+<figure><img src="../../results/figures/fig2_blind_types.png" style="max-width:46%"><figcaption>그림 3. 사각지대 생활권과 유형별 처방</figcaption></figure>
+<table>
+<tr><th>유형</th><th class="n">생활권</th><th class="n">노인 수</th><th class="n">격자당 노인</th><th class="n">평균 보행거리</th><th>처방</th></tr>
+<tr><td>A. 밀집형</td><td class="n">20곳</td><td class="n">5,021명</td><td class="n">17.5명</td><td class="n">597m</td><td>노선 경유 조정·정류장 신설</td></tr>
+<tr><td>B. 광역 저밀형</td><td class="n">12곳</td><td class="n">2,983명</td><td class="n">6.2명</td><td class="n">809m</td><td>수요응답형(DRT) 버스</td></tr>
+<tr><td>C. 소규모 산재형</td><td class="n">47곳</td><td class="n">3,442명</td><td class="n">7.9명</td><td class="n">619m</td><td>교통바우처·공공형 택시</td></tr>
+</table>
+<p class="note">노인 30명 이상인 생활권 79곳(11,446명) 기준. 30명 미만 소규모 사각지대는 그림 3에서 회색으로 표시했습니다.</p>
+
+<figure><img src="../../results/figures/fig5_new_stops.png" style="max-width:54%"><figcaption>그림 4. AI 최적화로 찾은 정류장 신설 후보지 상위 10곳</figcaption></figure>
+<table>
+<tr><th class="n">순위</th><th>행정동</th><th>유형</th><th class="n">해소 노인</th><th class="n">누적</th><th class="n">순위</th><th>행정동</th><th>유형</th><th class="n">해소 노인</th><th class="n">누적</th></tr>
+<tr><td class="n">1</td><td>중촌동</td><td>A</td><td class="n">272명</td><td class="n">272명</td><td class="n">6</td><td>둔산3동</td><td>A</td><td class="n">203명</td><td class="n">1,436명</td></tr>
+<tr><td class="n">2</td><td>용문동</td><td>A</td><td class="n">261명</td><td class="n">533명</td><td class="n">7</td><td>송촌동</td><td>A</td><td class="n">176명</td><td class="n">1,612명</td></tr>
+<tr><td class="n">3</td><td>온천1동</td><td>A</td><td class="n">258명</td><td class="n">791명</td><td class="n">8</td><td>관저1동</td><td>B</td><td class="n">156명</td><td class="n">1,768명</td></tr>
+<tr><td class="n">4</td><td>판암1동</td><td>B</td><td class="n">225명</td><td class="n">1,016명</td><td class="n">9</td><td>괴정동</td><td>A</td><td class="n">155명</td><td class="n">1,922명</td></tr>
+<tr><td class="n">5</td><td>원신흥동</td><td>A</td><td class="n">216명</td><td class="n">1,232명</td><td class="n">10</td><td>월평1동</td><td>B</td><td class="n">148명</td><td class="n">2,070명</td></tr>
+</table>
+<figure><img src="../../results/figures/fig4_mclp_curve.png" style="max-width:56%"><figcaption>그림 5. 신설 정류장 수에 따른 해소 노인 수</figcaption></figure>
+<p>정류장 10곳이면 사각지대 노인의 14.8%(2,070명), 30곳이면 29.4%(4,103명)가 걸어서 400m 안에 버스를 탈 수 있게 됩니다. 처음 10곳의 효율이 가장 높고 이후는 효과가 줄어듭니다. 정류장 신설만으로는 70% 이상이 남으므로, 수요응답형 버스와 바우처를 함께 써야 한다는 데이터 근거가 됩니다.</p>
+<p>최적화는 유형을 가리지 않고 모든 사각지대를 대상으로 했습니다. 그 결과 상위 10곳 중 7곳은 A형(밀집형), 3곳(판암1동·관저1동·월평1동)은 B형(광역 저밀형) 생활권에 놓였습니다. 30곳 해소 인원 4,103명도 A형 2,551명, B형 696명, C형 523명, 소규모 사각지대 333명으로 나뉩니다. 이를 6장에서 <b>A형은 정류장, B형 안의 후보지는 DRT 승하차 거점</b>으로 나눠 씁니다.</p>
+
+<h2>6. 정책제안 및 기대효과</h2>
+<h3>정책제안 (적용 대상: 대전광역시 교통정책과·각 구청)</h3>
+<ul>
+<li><b>1단계, A형(밀집형) 정류장 10곳 신설·노선 경유 조정:</b> 최적화 순위에서 A형 생활권에 놓인 상위 10곳(중촌동, 용문동 2곳, 온천1동, 원신흥동, 둔산3동, 송촌동, 괴정동, 노은1동, 복수동)에 정류장을 만들거나 인근 노선을 경유시킵니다. 순위표 기준 노인 1,949명이 보행 400m 안에서 버스를 탈 수 있게 됩니다. 후보지는 버스 통행이 가능한 도로 위 지점이므로, 현재 노선이 지나는지를 TAGO 노선 경유 데이터로 확인해 <b>경유 노선이 있는 곳은 정류장만 추가하고, 없는 곳은 인근 노선 경유 조정</b>을 함께 검토합니다.</li>
+<li><b>2단계, 꿈씨버스를 생활형 전기 DRT로 확대:</b> 관광형 운영 경험을 살려 광역 저밀형 상위 생활권(석교동, 진잠동, 판암1동, 회덕동)에 전기 수요응답형 버스를 시범 도입합니다. 최적화가 B형 생활권에서 찾은 판암1동·관저1동·월평1동 후보지는 DRT의 고정 승하차 거점으로 씁니다.</li>
+<li><b>3단계, 소규모 산재형은 바우처:</b> 노인이 흩어진 작은 생활권(C형 47곳, 3,442명)과 집계에서 뺀 외곽 산재 노인(최소 6,578명)은 상시 차량보다 교통바우처·공공형 택시가 1인당 비용이 낮습니다.</li>
+<li><b>제도 개선:</b> 교통 취약 판단과 대중교통계획 수립 때 "격자 단위 노인 접근성" 지표를 함께 보도록 합니다. 분석 코드는 공개 데이터만 쓰므로 매년 다시 돌려 정책 효과를 추적할 수 있고, 다른 광역시에도 그대로 적용할 수 있습니다.</li>
+</ul>
+<h3>기대효과</h3>
+<ul>
+<li><b>이동 격차 해소:</b> 정책 대상 생활권 79곳의 노인 약 11,400명과 외곽 산재 노인이 병원·시장에 가기 쉬워집니다. 사각지대 노인 다섯 명 중 한 명은 병원까지 1km 넘게 떨어져 있어 효과가 의료 접근성으로 이어집니다.</li>
+</ul>
+<table>
+<tr><th>탄소 감축 시나리오</th><th class="n">노인 1인 하루 차량 통행</th><th class="n">거리</th><th class="n">전환율</th><th class="n">연간 감축(전기 DRT)</th><th class="n">연간 감축(경유 DRT)</th></tr>
+<tr><td>보수</td><td class="n">1회</td><td class="n">3km</td><td class="n">20%</td><td class="n">469톤</td><td class="n">173톤</td></tr>
+<tr><td>중립</td><td class="n">2회</td><td class="n">4km</td><td class="n">30%</td><td class="n">1,875톤</td><td class="n">1,579톤</td></tr>
+<tr><td>적극</td><td class="n">2회</td><td class="n">5km</td><td class="n">50%</td><td class="n">3,906톤</td><td class="n">3,611톤</td></tr>
+</table>
+<p class="note">가정: 생활권 노인 11,446명 기준, 승용차 배출계수 187gCO₂/km(국산차 평균, 수도권대기환경청), DRT 12대(B형 생활권 수) × 하루 150km, 경유 승합 450g/km. 생활권 노인 모두가 승용차(자가·동승·택시)로 이동한다고 본 <b>상한 추정</b>이며, 전기 DRT의 충전 전력 배출은 포함하지 않았습니다. 경유 DRT를 쓰면 보수적 시나리오에서 감축 효과의 63%가 상쇄되므로 전기 DRT가 탄소중립의 전제 조건입니다.</p>
+<h3>한계</h3>
+<p>동 안의 노인 위치는 WorldPop 추정이고, 버스 배차간격과 경사는 반영하지 못했습니다. 정류장 후보지의 현재 노선 경유 여부와 설치 비용은 확인하지 못했습니다. 탄소 감축은 가정 기반 상한 시나리오입니다. 결선에서는 TAGO 배차간격·노선 경유 데이터와 현장 조사로 보완하겠습니다.</p>
+
+<h2>7. 분석도구 및 참고문헌</h2>
+<ul>
+<li>분석도구: Python 3.13, geopandas, OSMnx, NetworkX, scikit-learn, rasterio, matplotlib, Claude(Anthropic)</li>
+<li>숲과나눔, 「AI와 함께하는 교통문제 해결을 위한 데이터 분석 공모전」 공고(2026.8)</li>
+<li>주간경향, 「버스가 없는데 요금 무료가 무슨 소용」(2026.4.27)</li>
+<li>헤럴드, 「대전에 콜버스 등장…국제회의복합지구에 DRT 본격 운행」(2025.10.10)</li>
+<li>오토뷰, 「환경부, 국산차가 수입차보다 배출가스 적게 배출」(2014.4.10, 수도권대기환경청 자료)</li>
+<li>Church, R. &amp; ReVelle, C. (1974). The maximal covering location problem. Papers of the Regional Science Association, 32</li>
+<li>Boeing, G. (2017). OSMnx. Computers, Environment and Urban Systems, 65</li>
+<li>WorldPop (2025). Global age/sex structures R2025A, 100m. CC BY 4.0 · OpenStreetMap contributors (ODbL) · vuski/admdongkor</li>
+</ul>
+</body>
+</html>
